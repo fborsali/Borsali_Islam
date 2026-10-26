@@ -1,0 +1,6 @@
+{
+  "name": "Al-Manara — Apprendre l'Islam, le Coran et la Prière",
+  "description": "Application interactive et éducative pour apprendre les bases de l'Islam, explorer le Saint Coran avec récitation, maîtriser les 5 prières quotidiennes pas à pas et tester ses connaissances avec des quiz interactifs.",
+  "requestFramePermissions": [],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}
