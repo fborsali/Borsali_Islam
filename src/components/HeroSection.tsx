@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { ActiveTab } from '../types';
 import { POPULAR_CITIES, getPrayerTimes, getNextPrayer, getBrowserLocation, CityLocation } from '../utils/prayerTimes';
 import { recitationPlayer } from '../utils/audioPlayer';
-import { BookOpen, Compass, HelpCircle, Moon, Volume2, VolumeX, ArrowRight, Clock, MapPin, Navigation, Loader2 } from 'lucide-react';
+import { BookOpen, Compass, HelpCircle, Moon, Volume2, VolumeX, ArrowRight, Clock, MapPin, Navigation, Loader2, Shield, ScrollText, Calendar } from 'lucide-react';
 
 interface HeroSectionProps {
   onNavigate: (tab: ActiveTab) => void;
@@ -83,9 +83,30 @@ export const HeroSection: React.FC<HeroSectionProps> = ({ onNavigate }) => {
         </div>
 
         <div className="relative z-10 max-w-3xl">
-          {/* Basmalah */}
-          <div className="text-emerald-400 font-arabic text-2xl sm:text-3xl font-semibold mb-4 text-emerald-300/90 tracking-wide">
-            بِسْمِ اللَّهِ الرَّحْمَٰنِ الرَّحِيمِ
+          {/* Hijri Date & Basmalah */}
+          <div className="flex flex-wrap items-center justify-between gap-3 mb-4">
+            <div className="text-emerald-400 font-arabic text-2xl sm:text-3xl font-semibold text-emerald-300/90 tracking-wide">
+              بِسْمِ اللَّهِ الرَّحْمَٰنِ الرَّحِيمِ
+            </div>
+            <button
+              onClick={() => onNavigate('sunnah')}
+              className="inline-flex items-center gap-2 px-3 py-1 rounded-lg bg-emerald-950/90 border border-emerald-700/60 text-amber-300 text-xs font-medium hover:bg-emerald-900 transition-colors"
+            >
+              <Calendar className="w-3.5 h-3.5" />
+              <span className="capitalize">
+                {(() => {
+                  try {
+                    return new Intl.DateTimeFormat('fr-FR-u-ca-islamic-umalqura', {
+                      day: 'numeric',
+                      month: 'long',
+                      year: 'numeric'
+                    }).format(new Date());
+                  } catch {
+                    return 'Calendrier Hégirien';
+                  }
+                })()}
+              </span>
+            </button>
           </div>
 
           <h1 className="text-3xl sm:text-4xl md:text-5xl font-bold font-display tracking-tight text-white mb-4 leading-tight [text-wrap:balance]">
@@ -110,6 +131,13 @@ export const HeroSection: React.FC<HeroSectionProps> = ({ onNavigate }) => {
             >
               <BookOpen className="w-4 h-4" />
               <span>Lire & Écouter le Coran</span>
+            </button>
+            <button
+              onClick={() => onNavigate('adhkar')}
+              className="px-5 py-2.5 bg-emerald-900/90 hover:bg-emerald-800 text-emerald-200 border border-emerald-700 font-medium text-sm rounded-lg transition-colors flex items-center gap-2"
+            >
+              <Shield className="w-4 h-4" />
+              <span>Citadelle & 99 Noms</span>
             </button>
             <button
               onClick={() => onNavigate('quiz')}
@@ -275,38 +303,54 @@ export const HeroSection: React.FC<HeroSectionProps> = ({ onNavigate }) => {
         </div>
       </section>
 
-      {/* 4 Interactive Feature Pillars / Hub Cards */}
-      <section className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+      {/* 6 Interactive Feature Pillars / Hub Cards */}
+      <section className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
         {[
           {
             tab: 'pillars' as ActiveTab,
-            title: "Piliers & Foi",
-            arabic: "أركان الإسلام والإيمان",
-            desc: "Comprendre les 5 Piliers de l'Islam et les 6 articles de la Foi avec explications et sagesses.",
+            title: "Piliers, Zakāt & Ramadan",
+            arabic: "أركان الإسلام والزكاة ورمضان",
+            desc: "Comprendre les 5 Piliers de l'Islam, les 6 articles de la Foi, calculer votre Zakāt (Al-Māl & Al-Fitr) et le guide du Ramadan.",
             icon: <Moon className="w-5 h-5 text-emerald-700" />,
-            badge: "Fondations"
+            badge: "Fondations & Zakāt"
           },
           {
             tab: 'quran' as ActiveTab,
-            title: "Le Noble Coran",
-            arabic: "القرآن الكريم والتجويد",
-            desc: "Explorer les 114 sourates complètes avec les voix des Imams de La Mecque, d'Algérie 🇩🇿 (Warsh) et de Khaled Al-Jalil.",
+            title: "Le Noble Coran & Hifz",
+            arabic: "القرآن الكريم والتجويد والحفظ",
+            desc: "Les 114 sourates complètes (La Mecque, Algérie 🇩🇿 Warsh, Khaled Al-Jalil), couleurs Tajweed, favoris et boucle de mémorisation.",
             icon: <BookOpen className="w-5 h-5 text-teal-700" />,
             badge: "114 Sourates"
           },
           {
             tab: 'prayer' as ActiveTab,
-            title: "La Prière (Salat)",
-            arabic: "دليل الصلاة والوضوء",
-            desc: "Apprendre les ablutions (Wudu) et suivre pas à pas chaque Rak'at avec illustrations anatomiques et audio.",
+            title: "Prière, Ablutions & Suivi",
+            arabic: "دليل الصلاة والوضوء والمحاسبة",
+            desc: "Illustrations anatomiques réalistes du Wudū' et de la Salāt, boussole Qibla GPS et carnet de suivi quotidien (Muḥāsabah).",
             icon: <Compass className="w-5 h-5 text-amber-700" />,
             badge: "Pratique & Qibla"
           },
           {
+            tab: 'adhkar' as ActiveTab,
+            title: "Citadelle & 99 Noms d'Allah",
+            arabic: "حصن المسلم وأسماء الله الحسنى",
+            desc: "Toutes les invocations authentiques du matin, du soir et du quotidien avec compteurs interactifs, et les 99 Noms d'Allah.",
+            icon: <Shield className="w-5 h-5 text-emerald-800" />,
+            badge: "Adhkār & Asmā'"
+          },
+          {
+            tab: 'sunnah' as ActiveTab,
+            title: "Hadiths d'An-Nawawī & Sîrah",
+            arabic: "الأربعون النووية والسيرة النبوية",
+            desc: "Les Hadiths prophétiques fondateurs expliqués, la chronologie de la vie du Prophète ﷺ et le calendrier hégirien.",
+            icon: <ScrollText className="w-5 h-5 text-amber-800" />,
+            badge: "Sunnah & Histoire"
+          },
+          {
             tab: 'quiz' as ActiveTab,
-            title: "Quiz Interactifs",
-            arabic: "اختبارات وتحديات",
-            desc: "Valider vos connaissances avec 100+ questions par niveau (Débutant, Intermédiaire, Avancé) et badges.",
+            title: "Quiz Interactifs (100+)",
+            arabic: "اختبارات وتحديات شاملة",
+            desc: "Valider vos connaissances avec plus de 100 questions par niveau (Débutant, Intermédiaire, Avancé) et explications détaillées.",
             icon: <HelpCircle className="w-5 h-5 text-indigo-700" />,
             badge: "Évaluation"
           }

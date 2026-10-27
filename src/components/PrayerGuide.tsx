@@ -12,7 +12,30 @@ interface PrayerGuideProps {
 }
 
 export const PrayerGuide: React.FC<PrayerGuideProps> = ({ onStartPrayerQuiz }) => {
-  const [activeTab, setActiveTab] = useState<'simulator' | 'wudu' | 'qibla'>('simulator');
+  const [activeTab, setActiveTab] = useState<'simulator' | 'wudu' | 'qibla' | 'muhasabah'>('simulator');
+
+  // Daily Muhasabah (Spiritual Tracker) state
+  const todayKey = new Date().toISOString().slice(0, 10);
+  const [dailyChecks, setDailyChecks] = useState<Record<string, boolean>>(() => {
+    try {
+      const saved = localStorage.getItem(`almanara_muhasabah_${todayKey}`);
+      return saved ? JSON.parse(saved) : {};
+    } catch {
+      return {};
+    }
+  });
+
+  const toggleDailyCheck = (id: string) => {
+    setDailyChecks((prev) => {
+      const next = { ...prev, [id]: !prev[id] };
+      try {
+        localStorage.setItem(`almanara_muhasabah_${todayKey}`, JSON.stringify(next));
+      } catch {
+        // Ignore storage error
+      }
+      return next;
+    });
+  };
 
   // Simulator state
   const [selectedPrayerId, setSelectedPrayerId] = useState<string>('fajr');
@@ -131,6 +154,16 @@ export const PrayerGuide: React.FC<PrayerGuideProps> = ({ onStartPrayerQuiz }) =
             }`}
           >
             Qibla & Horaires
+          </button>
+          <button
+            onClick={() => setActiveTab('muhasabah')}
+            className={`px-3.5 py-1.5 text-xs font-medium rounded-md transition-all ${
+              activeTab === 'muhasabah'
+                ? 'bg-emerald-800 text-white shadow-xs font-semibold'
+                : 'text-stone-600 hover:text-stone-900'
+            }`}
+          >
+            Suivi Quotidien (Muḥāsabah)
           </button>
         </div>
       </div>
@@ -523,6 +556,106 @@ export const PrayerGuide: React.FC<PrayerGuideProps> = ({ onStartPrayerQuiz }) =
                     </div>
                   ))}
                 </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Mode 4: Daily Spiritual Tracker (Al-Muhasabah) */}
+      {activeTab === 'muhasabah' && (
+        <div className="space-y-6">
+          <div className="bg-white rounded-2xl border border-stone-200 p-6 sm:p-8 shadow-xs space-y-6">
+            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 pb-5 border-b border-stone-100">
+              <div>
+                <h2 className="text-xl font-bold text-stone-900 font-display">
+                  Carnet de Suivi Spirituel Quotidien (Al-Muḥāsabah)
+                </h2>
+                <p className="text-xs text-stone-500 mt-1">
+                  « Examinez vos âmes avant que vous ne soyez jugés, et pesez vos œuvres avant qu'elles ne soient pesées. » — 'Umar ibn Al-Khaṭṭāb (qu'Allah l'agrée)
+                </p>
+              </div>
+              <div className="px-4 py-2 rounded-xl bg-emerald-50 border border-emerald-200 text-emerald-900 text-xs font-semibold">
+                Objectifs du jour :{' '}
+                <strong className="font-mono text-sm">
+                  {Object.values(dailyChecks).filter(Boolean).length} / 10
+                </strong>
+              </div>
+            </div>
+
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+              {/* Column 1: 5 Daily Obligatory Prayers */}
+              <div className="space-y-3">
+                <h3 className="text-xs font-bold uppercase tracking-wider text-emerald-900">
+                  1. Les 5 Prières Obligatoires à l'heure
+                </h3>
+                {[
+                  { id: 'salat_fajr', label: 'Salāt Al-Fajr (Aube)', sub: '2 Rak’āt à voix haute' },
+                  { id: 'salat_dhuhr', label: 'Salāt Ad-Dhuhr (Midi)', sub: '4 Rak’āt à voix basse' },
+                  { id: 'salat_asr', label: 'Salāt Al-Asr (Après-midi)', sub: '4 Rak’āt à voix basse' },
+                  { id: 'salat_maghrib', label: 'Salāt Al-Maghrib (Coucher)', sub: '3 Rak’āt (2 Jahr + 1 Sirr)' },
+                  { id: 'salat_isha', label: 'Salāt Al-Isha (Nuit)', sub: '4 Rak’āt (2 Jahr + 2 Sirr)' }
+                ].map((item) => {
+                  const checked = !!dailyChecks[item.id];
+                  return (
+                    <button
+                      key={item.id}
+                      onClick={() => toggleDailyCheck(item.id)}
+                      className={`w-full p-3.5 rounded-xl border text-left flex items-center justify-between transition-all cursor-pointer ${
+                        checked
+                          ? 'bg-emerald-50 border-emerald-400 text-emerald-950'
+                          : 'bg-stone-50/70 border-stone-200 hover:border-stone-300 text-stone-800'
+                      }`}
+                    >
+                      <div>
+                        <div className="text-sm font-semibold">{item.label}</div>
+                        <div className="text-[11px] text-stone-500">{item.sub}</div>
+                      </div>
+                      <CheckCircle
+                        className={`w-5 h-5 transition-colors ${
+                          checked ? 'text-emerald-600' : 'text-stone-300'
+                        }`}
+                      />
+                    </button>
+                  );
+                })}
+              </div>
+
+              {/* Column 2: Daily Sunnah & Spiritual Habits */}
+              <div className="space-y-3">
+                <h3 className="text-xs font-bold uppercase tracking-wider text-amber-900">
+                  2. Adorations Surérogatoires & Cœur (Sunnah)
+                </h3>
+                {[
+                  { id: 'adhkar_matin', label: 'Invocations du Matin (Adhkār As-Sabāh)', sub: 'Protection après Fajr' },
+                  { id: 'adhkar_soir', label: 'Invocations du Soir (Adhkār Al-Masā’)', sub: 'Protection après Asr / Maghrib' },
+                  { id: 'wird_quran', label: 'Lecture quotidienne du Coran (Wird)', sub: 'Ne serait-ce qu’une page ou quelques versets avec méditation' },
+                  { id: 'sunnah_rawatib', label: 'Prières Sunnah Rawātib & Witr', sub: '12 Rak’āt surérogatoires liées aux prières obligatoires' },
+                  { id: 'sadaqah_akhlak', label: 'Aumône (Sadaqah), Bon comportement & Istighfār', sub: 'Un sourire, une aide, ou 100 fois Astaghfirullāh' }
+                ].map((item) => {
+                  const checked = !!dailyChecks[item.id];
+                  return (
+                    <button
+                      key={item.id}
+                      onClick={() => toggleDailyCheck(item.id)}
+                      className={`w-full p-3.5 rounded-xl border text-left flex items-center justify-between transition-all cursor-pointer ${
+                        checked
+                          ? 'bg-amber-50/80 border-amber-400 text-stone-900'
+                          : 'bg-stone-50/70 border-stone-200 hover:border-stone-300 text-stone-800'
+                      }`}
+                    >
+                      <div>
+                        <div className="text-sm font-semibold">{item.label}</div>
+                        <div className="text-[11px] text-stone-500">{item.sub}</div>
+                      </div>
+                      <CheckCircle
+                        className={`w-5 h-5 transition-colors ${
+                          checked ? 'text-amber-600' : 'text-stone-300'
+                        }`}
+                      />
+                    </button>
+                  );
+                })}
               </div>
             </div>
           </div>

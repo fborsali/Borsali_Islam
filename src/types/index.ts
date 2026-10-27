@@ -1,4 +1,4 @@
-export type ActiveTab = 'overview' | 'pillars' | 'quran' | 'prayer' | 'quiz' | 'adhkar';
+export type ActiveTab = 'overview' | 'pillars' | 'quran' | 'prayer' | 'adhkar' | 'sunnah' | 'quiz';
 
 export interface Pillar {
   id: string;

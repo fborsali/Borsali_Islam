@@ -42,14 +42,35 @@ export const QuranExplorer: React.FC<QuranExplorerProps> = ({ onStartQuranQuiz }
 
   // Search & Filters
   const [searchQuery, setSearchQuery] = useState<string>('');
-  const [filterType, setFilterType] = useState<'all' | 'meccan' | 'medinan' | 'famous' | 'juz30'>('all');
+  const [filterType, setFilterType] = useState<'all' | 'meccan' | 'medinan' | 'famous' | 'juz30' | 'favorites'>('all');
 
-  // Audio Playback State
+  // Audio Playback & Hifz Memorization State
   const [isPlaying, setIsPlaying] = useState<boolean>(false);
   const [currentTime, setCurrentTime] = useState<number>(0);
   const [duration, setDuration] = useState<number>(0);
   const [playbackSpeed, setPlaybackSpeed] = useState<number>(1);
   const [autoAdvance, setAutoAdvance] = useState<boolean>(true);
+  const [loopSurah, setLoopSurah] = useState<boolean>(false);
+  const [favoriteSurahs, setFavoriteSurahs] = useState<number[]>(() => {
+    try {
+      const saved = localStorage.getItem('almanara_fav_surahs');
+      return saved ? JSON.parse(saved) : [1, 18, 36, 67, 112];
+    } catch {
+      return [1, 18, 36, 67, 112];
+    }
+  });
+
+  const toggleFavoriteSurah = (surahNum: number) => {
+    setFavoriteSurahs((prev) => {
+      const next = prev.includes(surahNum) ? prev.filter((n) => n !== surahNum) : [...prev, surahNum];
+      try {
+        localStorage.setItem('almanara_fav_surahs', JSON.stringify(next));
+      } catch {
+        // Ignore storage error
+      }
+      return next;
+    });
+  };
 
   // Verses Display State
   const [versesList, setVersesList] = useState<LoadedVerse[]>([]);
@@ -169,8 +190,10 @@ export const QuranExplorer: React.FC<QuranExplorerProps> = ({ onStartQuranQuiz }
       },
       onEnd: () => {
         setIsPlaying(false);
-        // Autoplay next surah if enabled
-        if (autoAdvance && surahNumber < 114) {
+        // Mode Hifz (Boucle sur la même sourate) ou passage à la suivante
+        if (loopSurah) {
+          handleSelectAndPlaySurah(surahNumber, targetReciter);
+        } else if (autoAdvance && surahNumber < 114) {
           handleSelectAndPlaySurah(surahNumber + 1, targetReciter);
         }
       },
@@ -256,13 +279,14 @@ export const QuranExplorer: React.FC<QuranExplorerProps> = ({ onStartQuranQuiz }
       if (filterType === 'meccan') return s.revelationType === 'Mecquoise';
       if (filterType === 'medinan') return s.revelationType === 'Médinoise';
       if (filterType === 'juz30') return s.number >= 78;
+      if (filterType === 'favorites') return favoriteSurahs.includes(s.number);
       if (filterType === 'famous') {
         const famousNumbers = [1, 2, 18, 36, 55, 56, 67, 112, 113, 114];
         return famousNumbers.includes(s.number);
       }
       return true;
     });
-  }, [searchQuery, filterType]);
+  }, [searchQuery, filterType, favoriteSurahs]);
 
   const getFontSizeClass = () => {
     switch (arabicFontSize) {
@@ -444,6 +468,7 @@ export const QuranExplorer: React.FC<QuranExplorerProps> = ({ onStartQuranQuiz }
             <div className="flex flex-wrap items-center gap-1.5 w-full md:w-auto">
               {[
                 { id: 'all' as const, label: `Toutes (${ALL_114_SURAHS.length})` },
+                { id: 'favorites' as const, label: `Favoris ★ (${favoriteSurahs.length})` },
                 { id: 'famous' as const, label: 'Sourates Célèbres' },
                 { id: 'juz30' as const, label: 'Juz 30 (Amma 78-114)' },
                 { id: 'meccan' as const, label: 'Mecquoises' },
@@ -537,8 +562,33 @@ export const QuranExplorer: React.FC<QuranExplorerProps> = ({ onStartQuranQuiz }
                 </p>
               </div>
 
-              {/* Start Recitation CTA */}
-              <div className="shrink-0 flex items-center gap-3">
+              {/* Start Recitation CTA + Hifz Loop + Favorite */}
+              <div className="shrink-0 flex flex-wrap items-center gap-2">
+                <button
+                  onClick={() => toggleFavoriteSurah(currentSurahMeta.number)}
+                  className={`px-3 py-2.5 rounded-xl text-xs font-semibold border transition-all flex items-center gap-1.5 ${
+                    favoriteSurahs.includes(currentSurahMeta.number)
+                      ? 'bg-amber-500/20 border-amber-400 text-amber-300'
+                      : 'bg-stone-800/80 border-stone-700 text-stone-300 hover:text-white'
+                  }`}
+                  title="Ajouter ou retirer des Sourates favorites"
+                >
+                  <span>{favoriteSurahs.includes(currentSurahMeta.number) ? '★ Favori' : '☆ Favori'}</span>
+                </button>
+
+                <button
+                  onClick={() => setLoopSurah(!loopSurah)}
+                  className={`px-3 py-2.5 rounded-xl text-xs font-semibold border transition-all flex items-center gap-1.5 ${
+                    loopSurah
+                      ? 'bg-emerald-700 border-emerald-400 text-white'
+                      : 'bg-stone-800/80 border-stone-700 text-stone-300 hover:text-white'
+                  }`}
+                  title="Mode Mémorisation (Hifz) : Répéter la sourate en boucle"
+                >
+                  <RotateCcw className="w-3.5 h-3.5" />
+                  <span>{loopSurah ? 'Boucle Hifz : ON' : 'Boucle Hifz'}</span>
+                </button>
+
                 <button
                   onClick={handleTogglePlayPause}
                   className={`px-5 py-2.5 rounded-xl font-bold text-xs flex items-center gap-2 transition-all shadow-sm ${
